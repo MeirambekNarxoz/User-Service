@@ -28,7 +28,6 @@ func (s *AuthService) Register(user *models.User) (string, error) {
 	}
 	user.Password = string(hashedPassword)
 
-	// Проверка обязательных полей (можно расширить)
 	if user.Email == "" {
 		return "", errors.New("email не может быть пустым")
 	}
@@ -73,6 +72,7 @@ func (s *AuthService) Login(email, password string) (string, error) {
 // GenerateJwtToken — создание токена с данными твоей модели
 func (s *AuthService) GenerateJwtToken(user *models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"ID":         user.ID,
 		"email":      user.Email,
 		"firstname":  user.Firstname,
 		"role":       user.Role,

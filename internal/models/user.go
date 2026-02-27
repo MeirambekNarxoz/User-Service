@@ -1,6 +1,7 @@
 package models
 
 type User struct {
+	ID         uint   `json:"id"`
 	Firstname  string `gorm:"unique;not null" json:"firstname"`
 	Lastname   string `gorm:"unique;not null" json:"lastname"`
 	Email      string `gorm:"unique;not null" json:"email"`
@@ -8,5 +9,5 @@ type User struct {
 	Universite string `gorm:"not null" json:"universite"`
 	Role       string `gorm:"not null;default:USER" json:"role"`
 	Status     string `gorm:"not null;default:STUDENT" json:"status"`
-	Bio        string `gorm:"not null" json:"bio"`
+	Bio        string `json:"bio"`
 }
