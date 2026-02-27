@@ -31,6 +31,8 @@ func main() {
 	{
 		authGroup.POST("/register", authHand.Register)
 		authGroup.POST("/login", authHand.Login)
+		authGroup.PUT("/update/:id", authHand.UpdateProfile)
+		authGroup.GET("/user/:id", authHand.GetUser)
 	}
 
 	// Запуск на порту из конфига

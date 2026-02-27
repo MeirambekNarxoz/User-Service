@@ -28,3 +28,8 @@ func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 	err := r.db.First(&user, id).Error
 	return &user, err
 }
+
+func (r *UserRepository) UpdateUser(user *models.User) error {
+	// Updates(user) обновит в базе только те поля, которые не являются "нулевыми" в структуре
+	return r.db.Model(user).Updates(user).Error
+}

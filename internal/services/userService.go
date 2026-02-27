@@ -19,9 +19,7 @@ func NewUserService(userRepo *repository.UserRepository, jwtKey string) *AuthSer
 	return &AuthService{userRepo: userRepo, jwtKey: []byte(jwtKey)}
 }
 
-// Register — регистрация нового пользователя со всеми твоими полями
 func (s *AuthService) Register(user *models.User) (string, error) {
-	// 1. Хеширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", errors.New("ошибка при хешировании пароля")
@@ -32,59 +30,60 @@ func (s *AuthService) Register(user *models.User) (string, error) {
 		return "", errors.New("email не может быть пустым")
 	}
 
-	// 2. Сохранение в базу данных
 	err = s.userRepo.CreateUser(user)
 	if err != nil {
 		return "", errors.New("не удалось создать пользователя (возможно, email уже занят)")
 	}
 
-	// 3. Генерация токена сразу после регистрации
-	token, err := s.GenerateJwtToken(user)
-	if err != nil {
-		return "", errors.New("ошибка генерации токена")
-	}
-
-	return token, nil
+	return s.GenerateJwtToken(user)
 }
 
-// Login — вход по Email и паролю
 func (s *AuthService) Login(email, password string) (string, error) {
-	// 1. Поиск пользователя по Email
 	user, err := s.userRepo.GetByEmail(email)
 	if err != nil {
 		return "", errors.New("неверные учетные данные")
 	}
 
-	// 2. Проверка пароля через Bcrypt
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", errors.New("неверные учетные данные")
 	}
 
-	// 3. Генерация JWT-токена
-	token, err := s.GenerateJwtToken(user)
-	if err != nil {
-		return "", errors.New("ошибка при создании токена")
-	}
-
-	return token, nil
+	return s.GenerateJwtToken(user)
 }
 
-// GenerateJwtToken — создание токена с данными твоей модели
+// Получение пользователя по ID
+func (s *AuthService) GetUserByID(id uint) (*models.User, error) {
+	return s.userRepo.GetByID(id)
+}
+
+// Обновление профиля
+func (s *AuthService) UpdateProfile(userID uint, updatedData *models.User) (*models.User, error) {
+	user, err := s.userRepo.GetByID(userID)
+	if err != nil {
+		return nil, errors.New("пользователь не найден")
+	}
+
+	// Обновляем поля
+	user.Firstname = updatedData.Firstname
+	user.Universite = updatedData.Universite
+	user.Status = updatedData.Status
+
+	if err := s.userRepo.UpdateUser(user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (s *AuthService) GenerateJwtToken(user *models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"ID":         user.ID,
 		"email":      user.Email,
 		"firstname":  user.Firstname,
 		"role":       user.Role,
-		"status":     user.Status, // Студент/Школьник и т.д.
+		"status":     user.Status,
 		"universite": user.Universite,
-		"exp":        time.Now().Add(time.Hour * 24).Unix(), // 24 часа
+		"exp":        time.Now().Add(time.Hour * 24).Unix(),
 	})
-
-	signedToken, err := token.SignedString(s.jwtKey)
-	if err != nil {
-		return "", err
-	}
-
-	return signedToken, nil
+	return token.SignedString(s.jwtKey)
 }
