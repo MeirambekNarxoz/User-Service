@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"time"
 	"user-service/internal/config"
 	"user-service/internal/database"
 	"user-service/internal/delivery/http"
@@ -26,13 +28,22 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// 4. Роуты (можно прописать прямо тут для простоты)
 	authGroup := r.Group("/api/auth")
 	{
 		authGroup.POST("/register", authHand.Register)
 		authGroup.POST("/login", authHand.Login)
 		authGroup.PUT("/update/:id", authHand.UpdateProfile)
-		authGroup.GET("/user/:id", authHand.GetUser)
+		authGroup.GET("/users/:id", authHand.GetUser)
 	}
 
 	// Запуск на порту из конфига
