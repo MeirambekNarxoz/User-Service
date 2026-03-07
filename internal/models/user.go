@@ -1,13 +1,15 @@
 package models
 
+import "time"
+
 type User struct {
-	ID         uint   `json:"id"`
-	Firstname  string `gorm:"not null" json:"firstname"`
-	Lastname   string `gorm:"not null" json:"lastname"`
-	Email      string `gorm:"unique;not null" json:"email"`
-	Password   string `gorm:"not null" json:"password"`
-	Universite string `gorm:"not null" json:"universite"`
-	Role       string `gorm:"not null;default:USER" json:"role"`
-	Status     string `gorm:"not null;default:STUDENT" json:"status"`
-	Bio        string `json:"bio"`
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	Email        string    `gorm:"uniqueIndex;not null" json:"email"`
+	PasswordHash string    `gorm:"column:password_hash;not null" json:"-"`
+	Firstname    string    `gorm:"not null" json:"firstname"`
+	Lastname     string    `gorm:"not null" json:"lastname"`
+	Bio          string    `gorm:"type:text" json:"bio"`
+	Role         string    `gorm:"type:varchar(20);not null;default:USER" json:"role"`
+	Status       string    `gorm:"type:varchar(20);not null;default:ACTIVE" json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
 }

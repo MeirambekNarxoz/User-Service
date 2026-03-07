@@ -1,7 +1,6 @@
 package models
 
 const (
-	StatusStudent = "STUDENT"
-	StatusPupil   = "PUPIL"
-	StatusIntern  = "INTERN"
+	StatusActive  = "ACTIVE"
+	StatusBlocked = "BLOCKED"
 )

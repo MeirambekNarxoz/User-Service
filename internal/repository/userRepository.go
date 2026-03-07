@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"gorm.io/gorm"
 	"user-service/internal/models"
+
+	"gorm.io/gorm"
 )
 
 type UserRepository struct {
@@ -10,7 +11,7 @@ type UserRepository struct {
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{db}
+	return &UserRepository{db: db}
 }
 
 func (r *UserRepository) CreateUser(user *models.User) error {
@@ -30,6 +31,5 @@ func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 }
 
 func (r *UserRepository) UpdateUser(user *models.User) error {
-	// Updates(user) обновит в базе только те поля, которые не являются "нулевыми" в структуре
-	return r.db.Model(user).Updates(user).Error
+	return r.db.Save(user).Error
 }

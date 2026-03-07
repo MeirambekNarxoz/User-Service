@@ -1,30 +1,33 @@
 package routes
 
 import (
+	delivery "user-service/internal/delivery/http"
+	"user-service/internal/middleware"
+
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"user-service/internal/delivery/http"
-	"user-service/internal/repository"
-	"user-service/internal/services"
 )
 
-func SetupRouter(db *gorm.DB, router *gin.Engine) *gin.Engine {
-	// 1. Инициализация слоев (Dependency Injection)
-	// Замени "your_secret_key" на свой ключ из конфига/окружения
-	userRepo := repository.NewUserRepository(db)
-	authService := services.NewUserService(userRepo, "Aaa123")
-	authHandler := http.NewAuthHandler(authService)
-
-	// 2. Настройка групп и роутов
-	auth := router.Group("/api/auth")
+func SetupRoutes(
+	r *gin.Engine,
+	authHandler *delivery.AuthHandler,
+	wsHandler *delivery.WSHandler,
+	presenceHandler *delivery.PresenceHandler,
+	internalAPIToken string,
+) {
+	authGroup := r.Group("/api/auth")
 	{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-
-		// Роуты для работы с профилем по ID
-		auth.GET("/user/:id", authHandler.GetUser)
-		auth.PUT("/update/:id", authHandler.UpdateProfile)
+		authGroup.POST("/register", authHandler.Register)
+		authGroup.POST("/login", authHandler.Login)
+		authGroup.GET("/users/:id", authHandler.GetUser)
+		authGroup.PUT("/update/:id", authHandler.UpdateProfile)
 	}
 
-	return router
+	r.GET("/api/presence/ws", wsHandler.Connect)
+
+	internal := r.Group("/internal")
+	internal.Use(middleware.InternalOnlyMiddleware(internalAPIToken))
+	{
+		internal.GET("/presence/count", presenceHandler.GetOnlineCount)
+		internal.POST("/presence/users", presenceHandler.GetUsersStatus)
+	}
 }
