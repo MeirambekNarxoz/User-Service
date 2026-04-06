@@ -32,6 +32,16 @@ func UserIDFromToken(tokenString, secret string) (uint, error) {
 	return uint(id), nil
 }
 
+// GetUserID retrieves the UserID safely from the context
+func GetUserID(c *gin.Context) (uint, bool) {
+	val, exists := c.Get("user_id")
+	if !exists {
+		return 0, false
+	}
+	userID, ok := val.(uint)
+	return userID, ok
+}
+
 // AuthMiddleware extracts X-User-Id and X-User-Roles from headers (injected by API Gateway)
 func AuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -42,7 +52,7 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 			return
 		}
 
-		userIDFloat, err := strconv.ParseFloat(userIDStr, 64)
+		userIDUint, err := strconv.ParseUint(userIDStr, 10, 32)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "x-user-id header is invalid"})
 			return
@@ -59,7 +69,7 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 			role = models.RoleUser
 		}
 
-		c.Set("user_id", uint(userIDFloat))
+		c.Set("user_id", uint(userIDUint))
 		c.Set("role", role)
 		c.Next()
 	}
