@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"log"
-	"time"
 	"user-service/internal/config"
 	"user-service/internal/database"
 	delivery "user-service/internal/delivery/http"
@@ -28,6 +28,12 @@ func main() {
 	presenceHandler := delivery.NewPresenceHandler(presenceService)
 
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization"},
+	}))
 
 	routes.SetupRoutes(
 		r,
