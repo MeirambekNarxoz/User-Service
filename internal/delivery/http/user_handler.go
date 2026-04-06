@@ -54,11 +54,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	wsUrl := "ws://localhost:8080/api/presence/ws?token=" + token
-	c.JSON(http.StatusCreated, gin.H{
-		"token":  token,
-		"ws_url": wsUrl,
-	})
+	c.JSON(http.StatusCreated, gin.H{"token": token})
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
@@ -74,11 +70,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	wsUrl := "ws://localhost:8080/api/presence/ws?token=" + token
-	c.JSON(http.StatusOK, gin.H{
-		"token":  token,
-		"ws_url": wsUrl,
-	})
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func (h *AuthHandler) GetUser(c *gin.Context) {

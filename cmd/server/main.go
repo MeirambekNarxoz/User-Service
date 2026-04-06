@@ -10,7 +10,6 @@ import (
 	"user-service/internal/routes"
 	"user-service/internal/services"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,15 +28,6 @@ func main() {
 	presenceHandler := delivery.NewPresenceHandler(presenceService)
 
 	r := gin.Default()
-
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{cfg.WSAllowedOrigin},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Internal-Token"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
 
 	routes.SetupRoutes(
 		r,
