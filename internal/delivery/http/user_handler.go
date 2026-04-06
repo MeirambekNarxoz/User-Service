@@ -54,7 +54,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"token": token})
+	wsUrl := "ws://localhost:8080/api/presence/ws?token=" + token
+	c.JSON(http.StatusCreated, gin.H{
+		"token":  token,
+		"ws_url": wsUrl,
+	})
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
@@ -70,7 +74,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	wsUrl := "ws://localhost:8080/api/presence/ws?token=" + token
+	c.JSON(http.StatusOK, gin.H{
+		"token":  token,
+		"ws_url": wsUrl,
+	})
 }
 
 func (h *AuthHandler) GetUser(c *gin.Context) {
@@ -117,4 +125,13 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		"message": "профиль обновлен",
 		"user":    user,
 	})
+}
+
+func (h *AuthHandler) GetAllUsers(c *gin.Context) {
+	users, err := h.authService.GetAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка при получении пользователей"})
+		return
+	}
+	c.JSON(http.StatusOK, users)
 }

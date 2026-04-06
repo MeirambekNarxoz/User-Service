@@ -45,6 +45,7 @@ func main() {
 		wsHandler,
 		presenceHandler,
 		cfg.InternalAPIToken,
+		cfg.JwtSecret,
 	)
 
 	log.Println("Server started on port:", cfg.Port)

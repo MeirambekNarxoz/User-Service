@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
 	"strings"
+	"user-service/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -41,4 +43,51 @@ func UserIDFromAuthHeader(c *gin.Context, secret string) (uint, error) {
 	}
 
 	return UserIDFromToken(strings.TrimPrefix(auth, prefix), secret)
+}
+
+func AuthMiddleware(secret string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		auth := c.GetHeader("Authorization")
+		if auth == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization header is empty"})
+			return
+		}
+
+		const prefix = "Bearer "
+		if !strings.HasPrefix(auth, prefix) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid auth header"})
+			return
+		}
+
+		tokenString := strings.TrimPrefix(auth, prefix)
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		})
+
+		if err != nil || !token.Valid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
+			return
+		}
+
+		idFloat, ok := claims["user_id"].(float64)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user_id not found in token"})
+			return
+		}
+		
+		roleStr, ok := claims["role"].(string)
+		if !ok {
+			roleStr = string(models.RoleUser)
+		}
+
+		c.Set("user_id", uint(idFloat))
+		c.Set("role", models.Role(roleStr))
+		c.Next()
+	}
 }

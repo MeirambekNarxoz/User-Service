@@ -1,6 +1,8 @@
 package models
 
+type Status string
+
 const (
-	StatusActive  = "ACTIVE"
-	StatusBlocked = "BLOCKED"
+	StatusActive  Status = "ACTIVE"
+	StatusBlocked Status = "BLOCKED"
 )

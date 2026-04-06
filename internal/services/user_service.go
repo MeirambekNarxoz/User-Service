@@ -109,3 +109,7 @@ func (s *AuthService) GenerateJwtToken(user *models.User) (string, error) {
 
 	return token.SignedString(s.jwtKey)
 }
+
+func (s *AuthService) GetAllUsers() ([]models.User, error) {
+	return s.userRepo.GetAllUsers()
+}

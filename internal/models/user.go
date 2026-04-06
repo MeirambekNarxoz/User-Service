@@ -9,7 +9,7 @@ type User struct {
 	Firstname    string    `gorm:"not null" json:"firstname"`
 	Lastname     string    `gorm:"not null" json:"lastname"`
 	Bio          string    `gorm:"type:text" json:"bio"`
-	Role         string    `gorm:"type:varchar(20);not null;default:USER" json:"role"`
-	Status       string    `gorm:"type:varchar(20);not null;default:ACTIVE" json:"status"`
+	Role         Role      `gorm:"type:varchar(20);not null;default:'USER'" json:"role"`
+	Status       Status    `gorm:"type:varchar(20);not null;default:'ACTIVE'" json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 }

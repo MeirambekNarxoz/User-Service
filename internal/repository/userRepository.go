@@ -33,3 +33,9 @@ func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 func (r *UserRepository) UpdateUser(user *models.User) error {
 	return r.db.Save(user).Error
 }
+
+func (r *UserRepository) GetAllUsers() ([]models.User, error) {
+	var users []models.User
+	err := r.db.Find(&users).Error
+	return users, err
+}
