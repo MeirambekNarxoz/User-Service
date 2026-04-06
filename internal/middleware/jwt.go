@@ -3,6 +3,7 @@ package middleware
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"user-service/internal/models"
 
@@ -31,63 +32,35 @@ func UserIDFromToken(tokenString, secret string) (uint, error) {
 	return uint(id), nil
 }
 
-func UserIDFromAuthHeader(c *gin.Context, secret string) (uint, error) {
-	auth := c.GetHeader("Authorization")
-	if auth == "" {
-		return 0, errors.New("authorization header is empty")
-	}
-
-	const prefix = "Bearer "
-	if !strings.HasPrefix(auth, prefix) {
-		return 0, errors.New("invalid auth header")
-	}
-
-	return UserIDFromToken(strings.TrimPrefix(auth, prefix), secret)
-}
-
+// AuthMiddleware extracts X-User-Id and X-User-Roles from headers (injected by API Gateway)
 func AuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		auth := c.GetHeader("Authorization")
-		if auth == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization header is empty"})
-			return
-		}
-
-		const prefix = "Bearer "
-		if !strings.HasPrefix(auth, prefix) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid auth header"})
-			return
-		}
-
-		tokenString := strings.TrimPrefix(auth, prefix)
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secret), nil
-		})
-
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
-			return
-		}
-
-		idFloat, ok := claims["user_id"].(float64)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user_id not found in token"})
-			return
-		}
+		userIDStr := c.GetHeader("X-User-Id")
 		
-		roleStr, ok := claims["role"].(string)
-		if !ok {
-			roleStr = string(models.RoleUser)
+		if userIDStr == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "x-user-id header is missing"})
+			return
 		}
 
-		c.Set("user_id", uint(idFloat))
-		c.Set("role", models.Role(roleStr))
+		userIDFloat, err := strconv.ParseFloat(userIDStr, 64)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "x-user-id header is invalid"})
+			return
+		}
+
+		rolesStr := c.GetHeader("X-User-Roles")
+		
+		var role models.Role
+		if strings.Contains(rolesStr, "ROLE_ADMIN") {
+			role = models.RoleAdmin
+		} else if strings.Contains(rolesStr, "ROLE_MODERATOR") {
+			role = models.RoleModerator
+		} else {
+			role = models.RoleUser
+		}
+
+		c.Set("user_id", uint(userIDFloat))
+		c.Set("role", role)
 		c.Next()
 	}
 }
