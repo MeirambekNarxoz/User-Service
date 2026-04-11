@@ -17,6 +17,10 @@ type Config struct {
 	RedisDB          int
 	WSAllowedOrigin  string
 	InternalAPIToken string
+	MinIOEndpoint    string
+	MinIOAccessKey   string
+	MinIOSecretKey   string
+	MinIOUseSSL      bool
 }
 
 func LoadConfig() *Config {
@@ -36,6 +40,10 @@ func LoadConfig() *Config {
 		RedisDB:          redisDB,
 		WSAllowedOrigin:  getEnv("WS_ALLOWED_ORIGIN", "http://localhost:5173"),
 		InternalAPIToken: getEnv("INTERNAL_API_TOKEN", ""),
+		MinIOEndpoint:    getEnv("MINIO_ENDPOINT", ""),
+		MinIOAccessKey:   getEnv("MINIO_ACCESS_KEY", ""),
+		MinIOSecretKey:   getEnv("MINIO_SECRET_KEY", ""),
+		MinIOUseSSL:      getEnv("MINIO_USE_SSL", "false") == "true",
 	}
 
 	if cfg.DBConn == "" {

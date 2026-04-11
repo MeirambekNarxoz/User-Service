@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -48,6 +49,7 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		userIDStr := c.GetHeader("X-User-Id")
 		
 		if userIDStr == "" {
+			log.Printf("DEBUG: X-User-Id header is missing! All headers: %v", c.Request.Header)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "x-user-id header is missing"})
 			return
 		}
