@@ -37,7 +37,7 @@ func SetupRoutes(
 	}
 
 	adminGroup := r.Group("/api/admin")
-	adminGroup.Use(middleware.AuthMiddleware(jwtSecret), middleware.RoleMiddleware(models.RoleAdmin))
+	adminGroup.Use(middleware.AuthMiddleware(jwtSecret), middleware.RoleMiddleware(models.RoleAdmin, models.RoleModerator))
 	{
 		adminGroup.GET("/users", authHandler.GetAllUsers)
 		adminGroup.PUT("/users/:id/role", authHandler.UpdateRole)
