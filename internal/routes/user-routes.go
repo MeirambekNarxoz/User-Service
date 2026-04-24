@@ -18,8 +18,11 @@ func SetupRoutes(
 ) {
 	authGroup := r.Group("/api/auth")
 	{
+		authGroup.POST("/register/send-code", authHandler.RegisterSendCode)
 		authGroup.POST("/register", authHandler.Register)
 		authGroup.POST("/login", authHandler.Login)
+		authGroup.POST("/password/forgot", authHandler.ForgotPasswordSendCode)
+		authGroup.POST("/password/reset", authHandler.ResetPassword)
 	}
 
 	usersGroup := r.Group("/api/users")
@@ -30,19 +33,21 @@ func SetupRoutes(
 		usersGroup.PUT("/update/:id", authHandler.UpdateProfile)
 		usersGroup.POST("/avatar", authHandler.UploadAvatar)
 
-		// Friendship routes
-		usersGroup.POST("/friends/request", authHandler.SendFriendRequest)
-		usersGroup.POST("/friends/accept", authHandler.AcceptFriendRequest)
-		usersGroup.GET("/friends", authHandler.GetFriends)
 	}
 
 	adminGroup := r.Group("/api/admin")
-	adminGroup.Use(middleware.AuthMiddleware(jwtSecret), middleware.RoleMiddleware(models.RoleAdmin, models.RoleModerator))
+	adminGroup.Use(middleware.AuthMiddleware(jwtSecret), middleware.RoleMiddleware(models.RoleAdmin))
 	{
 		adminGroup.GET("/users", authHandler.GetAllUsers)
 		adminGroup.PUT("/users/:id/role", authHandler.UpdateRole)
-		adminGroup.POST("/users/:id/block", authHandler.BlockUser)
-		adminGroup.POST("/users/:id/unblock", authHandler.UnblockUser)
+	}
+
+	// Moderation routes (both ADMIN and MODERATOR can block/unblock users)
+	moderationGroup := r.Group("/api/admin")
+	moderationGroup.Use(middleware.AuthMiddleware(jwtSecret), middleware.RoleMiddleware(models.RoleAdmin, models.RoleModerator))
+	{
+		moderationGroup.POST("/users/:id/block", authHandler.BlockUser)
+		moderationGroup.POST("/users/:id/unblock", authHandler.UnblockUser)
 	}
 
 	r.GET("/api/presence/ws", wsHandler.Connect)

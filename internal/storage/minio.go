@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -74,10 +75,13 @@ func (m *MinioClient) UploadAvatar(ctx context.Context, file *multipart.FileHead
 	}
 	defer src.Close()
 
-	// Using original filename, but adding a unique suffix or prefix is recommended
-	fileName := fmt.Sprintf("avatar-%d-%s", ctx.Value("user_id"), file.Filename)
-	if ctx.Value("user_id") == nil {
-		fileName = file.Filename
+	// Generate unique filename using timestamp to avoid caching issues and conflicts
+	userIDVal := ctx.Value("user_id")
+	var fileName string
+	if userIDVal != nil {
+		fileName = fmt.Sprintf("avatar-%v-%d-%s", userIDVal, time.Now().Unix(), file.Filename)
+	} else {
+		fileName = fmt.Sprintf("avatar-%d-%s", time.Now().Unix(), file.Filename)
 	}
 
 	info, err := m.client.PutObject(ctx, m.bucketName, fileName, src, file.Size, minio.PutObjectOptions{

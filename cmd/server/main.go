@@ -6,6 +6,7 @@ import (
 	"user-service/internal/database"
 	delivery "user-service/internal/delivery/http"
 	"user-service/internal/models"
+	"user-service/internal/rabbitmq"
 	"user-service/internal/repository"
 	"user-service/internal/routes"
 	"user-service/internal/services"
@@ -18,7 +19,7 @@ func main() {
 	cfg := config.LoadConfig()
 
 	db := database.InitDB(cfg.DBConn)
-	db.AutoMigrate(&models.User{}, &models.Friendship{})
+	db.AutoMigrate(&models.User{})
 	rdb := database.InitRedis(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB)
 
 	userRepo := repository.NewUserRepository(db)
@@ -26,7 +27,24 @@ func main() {
 	// Init MinIO
 	minioClient := storage.NewMinioClient(cfg.MinIOEndpoint, cfg.MinIOAccessKey, cfg.MinIOSecretKey, cfg.MinIOUseSSL)
 
-	authService := services.NewUserService(userRepo, cfg.JwtSecret, rdb)
+	// Init RabbitMQ Producer
+	rabbitProducer, err := rabbitmq.NewRabbitMQProducer(cfg.RabbitURL)
+	if err != nil {
+		log.Printf("Warning: failed to init RabbitMQ: %v", err)
+	} else {
+		defer rabbitProducer.Close()
+	}
+
+	// Init Email Service (SMTP)
+	emailService := services.NewEmailService(
+		cfg.SMTPHost,
+		cfg.SMTPPort,
+		cfg.SMTPUser,
+		cfg.SMTPPass,
+		cfg.SMTPFromName,
+	)
+
+	authService := services.NewUserService(userRepo, cfg.JwtSecret, rdb, rabbitProducer, emailService)
 	authHandler := delivery.NewAuthHandler(authService, minioClient)
 
 	presenceService := services.NewPresenceService(rdb)

@@ -21,6 +21,12 @@ type Config struct {
 	MinIOAccessKey   string
 	MinIOSecretKey   string
 	MinIOUseSSL      bool
+	RabbitURL        string
+	SMTPHost         string
+	SMTPPort         string
+	SMTPUser         string
+	SMTPPass         string
+	SMTPFromName     string
 }
 
 func LoadConfig() *Config {
@@ -44,6 +50,12 @@ func LoadConfig() *Config {
 		MinIOAccessKey:   getEnv("MINIO_ACCESS_KEY", ""),
 		MinIOSecretKey:   getEnv("MINIO_SECRET_KEY", ""),
 		MinIOUseSSL:      getEnv("MINIO_USE_SSL", "false") == "true",
+		RabbitURL:        getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
+		SMTPHost:         getEnv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:         getEnv("SMTP_PORT", "587"),
+		SMTPUser:         getEnv("SMTP_USER", ""),
+		SMTPPass:         getEnv("SMTP_PASS", ""),
+		SMTPFromName:     getEnv("SMTP_FROM_NAME", "SkillHub Delivery"),
 	}
 
 	if cfg.DBConn == "" {
