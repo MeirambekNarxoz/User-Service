@@ -102,6 +102,130 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	return s.GenerateJwtToken(user)
 }
 
+func (s *AuthService) LoginWithGoogle(googleID, email, firstname, lastname, avatarURL string) (string, error) {
+	// 1. Try to find user by Google ID
+	user, err := s.userRepo.GetByGoogleID(googleID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", err
+	}
+
+	// 2. If not found by Google ID, try to find by Email
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		user, err = s.userRepo.GetByEmail(email)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", err
+		}
+
+		// 3. If found by Email, link Google ID
+		if err == nil {
+			user.GoogleID = googleID
+			if user.AvatarURL == "" {
+				user.AvatarURL = avatarURL
+			}
+			s.userRepo.UpdateUser(user)
+		} else {
+			// 4. If still not found, create new user
+			user = &models.User{
+				Email:      email,
+				GoogleID:   googleID,
+				Firstname:  firstname,
+				Lastname:   lastname,
+				AvatarURL:  avatarURL,
+				Role:       models.RoleUser,
+				Status:     models.StatusActive,
+				Universite: "Google User", // Default value
+			}
+			if err := s.userRepo.CreateUser(user); err != nil {
+				return "", errors.New("не удалось создать пользователя через Google")
+			}
+		}
+	}
+
+	return s.GenerateJwtToken(user)
+}
+
+func (s *AuthService) LoginWithGithub(githubID, email, firstname, lastname, avatarURL string) (string, error) {
+	// 1. Try to find user by Github ID
+	user, err := s.userRepo.GetByGithubID(githubID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", err
+	}
+
+	// 2. If not found by Github ID, try to find by Email
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		user, err = s.userRepo.GetByEmail(email)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", err
+		}
+
+		// 3. If found by Email, link Github ID
+		if err == nil {
+			user.GithubID = githubID
+			if user.AvatarURL == "" {
+				user.AvatarURL = avatarURL
+			}
+			s.userRepo.UpdateUser(user)
+		} else {
+			// 4. If still not found, create new user
+			user = &models.User{
+				Email:      email,
+				GithubID:   githubID,
+				Firstname:  firstname,
+				Lastname:   lastname,
+				AvatarURL:  avatarURL,
+				Role:       models.RoleUser,
+				Status:     models.StatusActive,
+				Universite: "Github User",
+			}
+			if err := s.userRepo.CreateUser(user); err != nil {
+				return "", errors.New("не удалось создать пользователя через Github")
+			}
+		}
+	}
+
+	return s.GenerateJwtToken(user)
+}
+
+func (s *AuthService) LoginWithLinkedin(linkedinID, email, firstname, lastname, avatarURL string) (string, error) {
+	// 1. Try to find user by Linkedin ID
+	user, err := s.userRepo.GetByLinkedinID(linkedinID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", err
+	}
+
+	// 2. If not found by ID, try to find by Email
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		user, err = s.userRepo.GetByEmail(email)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", err
+		}
+
+		if err == nil {
+			user.LinkedinID = linkedinID
+			if user.AvatarURL == "" {
+				user.AvatarURL = avatarURL
+			}
+			s.userRepo.UpdateUser(user)
+		} else {
+			user = &models.User{
+				Email:      email,
+				LinkedinID: linkedinID,
+				Firstname:  firstname,
+				Lastname:   lastname,
+				AvatarURL:  avatarURL,
+				Role:       models.RoleUser,
+				Status:     models.StatusActive,
+				Universite: "Linkedin User",
+			}
+			if err := s.userRepo.CreateUser(user); err != nil {
+				return "", errors.New("не удалось создать пользователя через Linkedin")
+			}
+		}
+	}
+
+	return s.GenerateJwtToken(user)
+}
+
 func (s *AuthService) GetUserByID(id uint) (*models.User, error) {
 	return s.userRepo.GetByID(id)
 }
@@ -232,10 +356,6 @@ func (s *AuthService) SendResetPasswordCode(email, code string) error {
 }
 
 func (s *AuthService) VerifyCode(prefix, email, code string) error {
-	// 🛠 DEVELOPER BYPASS: Always allow 000000 in development
-	if code == "000000" {
-		return nil
-	}
 
 	key := fmt.Sprintf("%s:%s", prefix, email)
 	val, err := s.rdb.Get(context.Background(), key).Result()

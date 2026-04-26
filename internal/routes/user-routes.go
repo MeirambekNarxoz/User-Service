@@ -11,6 +11,9 @@ import (
 func SetupRoutes(
 	r *gin.Engine,
 	authHandler *delivery.AuthHandler,
+	googleAuthHandler *delivery.GoogleAuthHandler,
+	githubAuthHandler *delivery.GithubAuthHandler,
+	linkedinAuthHandler *delivery.LinkedinAuthHandler,
 	wsHandler *delivery.WSHandler,
 	presenceHandler *delivery.PresenceHandler,
 	internalAPIToken string,
@@ -23,6 +26,18 @@ func SetupRoutes(
 		authGroup.POST("/login", authHandler.Login)
 		authGroup.POST("/password/forgot", authHandler.ForgotPasswordSendCode)
 		authGroup.POST("/password/reset", authHandler.ResetPassword)
+		
+		// Google Auth
+		authGroup.GET("/google/login", googleAuthHandler.Login)
+		authGroup.GET("/google/callback", googleAuthHandler.Callback)
+
+		// Github Auth
+		authGroup.GET("/github/login", githubAuthHandler.Login)
+		authGroup.GET("/github/callback", githubAuthHandler.Callback)
+
+		// Linkedin Auth
+		authGroup.GET("/linkedin/login", linkedinAuthHandler.Login)
+		authGroup.GET("/linkedin/callback", linkedinAuthHandler.Callback)
 	}
 
 	usersGroup := r.Group("/api/users")

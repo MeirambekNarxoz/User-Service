@@ -76,12 +76,9 @@ func (h *AuthHandler) RegisterSendCode(c *gin.Context) {
 
 	err := h.authService.SendRegistrationCode(req.Email, code)
 	if err != nil {
-		log.Printf("ERROR: Ошибка отправки почты через Resend: %v", err)
-		// Не возвращаем 500, чтобы не блокировать регистрацию.
-		// Пользователь может увидеть код в логах или использовать 000000
-		c.JSON(http.StatusOK, gin.H{
-			"message":  "код сгенерирован (режим разработки), проверьте консоль сервера если письмо не пришло",
-			"dev_note": "в режиме разработки можно использовать 000000",
+		log.Printf("ERROR: Ошибка отправки почты (SMTP): %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Не удалось отправить письмо. Проверьте настройки SMTP или попробуйте позже.",
 		})
 		return
 	}
@@ -163,9 +160,9 @@ func (h *AuthHandler) ForgotPasswordSendCode(c *gin.Context) {
 
 	err := h.authService.SendResetPasswordCode(req.Email, code)
 	if err != nil {
-		log.Printf("ERROR: Ошибка Resend: %v", err)
-		c.JSON(http.StatusOK, gin.H{
-			"message": "код сброса сгенерирован, используйте 000000 или проверьте логи",
+		log.Printf("ERROR: Ошибка отправки почты (SMTP): %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Не удалось отправить письмо для восстановления пароля.",
 		})
 		return
 	}

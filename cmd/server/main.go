@@ -46,6 +46,9 @@ func main() {
 
 	authService := services.NewUserService(userRepo, cfg.JwtSecret, rdb, rabbitProducer, emailService)
 	authHandler := delivery.NewAuthHandler(authService, minioClient)
+	googleAuthHandler := delivery.NewGoogleAuthHandler(authService)
+	githubAuthHandler := delivery.NewGithubAuthHandler(authService)
+	linkedinAuthHandler := delivery.NewLinkedinAuthHandler(authService)
 
 	presenceService := services.NewPresenceService(rdb)
 	wsHandler := delivery.NewWSHandler(presenceService, cfg.JwtSecret, cfg.WSAllowedOrigin)
@@ -55,6 +58,9 @@ func main() {
 	routes.SetupRoutes(
 		r,
 		authHandler,
+		googleAuthHandler,
+		githubAuthHandler,
+		linkedinAuthHandler,
 		wsHandler,
 		presenceHandler,
 		cfg.InternalAPIToken,

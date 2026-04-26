@@ -31,6 +31,24 @@ func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 	return &user, err
 }
 
+func (r *UserRepository) GetByGoogleID(googleID string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("google_id = ?", googleID).First(&user).Error
+	return &user, err
+}
+
+func (r *UserRepository) GetByGithubID(githubID string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("github_id = ?", githubID).First(&user).Error
+	return &user, err
+}
+
+func (r *UserRepository) GetByLinkedinID(linkedinID string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("linkedin_id = ?", linkedinID).First(&user).Error
+	return &user, err
+}
+
 func (r *UserRepository) UpdateUser(user *models.User) error {
 	return r.db.Save(user).Error
 }
