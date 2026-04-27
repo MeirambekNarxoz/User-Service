@@ -5,7 +5,6 @@ import (
 	"user-service/internal/config"
 	"user-service/internal/database"
 	delivery "user-service/internal/delivery/http"
-	"user-service/internal/models"
 	"user-service/internal/rabbitmq"
 	"user-service/internal/repository"
 	"user-service/internal/routes"
@@ -17,9 +16,8 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
-
 	db := database.InitDB(cfg.DBConn)
-	db.AutoMigrate(&models.User{})
+	database.RunMigrations(cfg.DBConn)
 	rdb := database.InitRedis(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB)
 
 	userRepo := repository.NewUserRepository(db)
