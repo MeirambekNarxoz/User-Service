@@ -71,17 +71,14 @@ func (h *AuthHandler) RegisterSendCode(c *gin.Context) {
 	// Генерация и кэширование
 	code := h.authService.GenerateAndSaveCode("register_code", req.Email)
 
-	// 🛠 DEBUG: Выводим код в консоль сервера
+	// 🛠 DEBUG: Выводим код в консоль сервера (если SMTP недоступен — код всё равно в Redis)
 	log.Printf("DEBUG: Код регистрации для %s: %s", req.Email, code)
 
-	err := h.authService.SendRegistrationCode(req.Email, code)
-	if err != nil {
-		log.Printf("ERROR: Ошибка отправки почты (SMTP): %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Не удалось отправить письмо. Проверьте настройки SMTP или попробуйте позже.",
-		})
-		return
-	}
+	go func(email, verificationCode string) {
+		if err := h.authService.SendRegistrationCode(email, verificationCode); err != nil {
+			log.Printf("ERROR: Ошибка отправки почты (SMTP) для %s: %v", email, err)
+		}
+	}(req.Email, code)
 
 	c.JSON(http.StatusOK, gin.H{"message": "код подтверждения успешно отправлен"})
 }
@@ -155,17 +152,13 @@ func (h *AuthHandler) ForgotPasswordSendCode(c *gin.Context) {
 
 	code := h.authService.GenerateAndSaveCode("reset_code", req.Email)
 
-	// 🛠 DEBUG: Выводим в консоль
 	log.Printf("DEBUG: Код восстановления для %s: %s", req.Email, code)
 
-	err := h.authService.SendResetPasswordCode(req.Email, code)
-	if err != nil {
-		log.Printf("ERROR: Ошибка отправки почты (SMTP): %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Не удалось отправить письмо для восстановления пароля.",
-		})
-		return
-	}
+	go func(email, resetCode string) {
+		if err := h.authService.SendResetPasswordCode(email, resetCode); err != nil {
+			log.Printf("ERROR: Ошибка отправки почты (SMTP) для %s: %v", email, err)
+		}
+	}(req.Email, code)
 
 	c.JSON(http.StatusOK, gin.H{"message": "код восстановления пароля отправлен на почту"})
 }

@@ -1,8 +1,11 @@
 package services
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/smtp"
+	"time"
 )
 
 type EmailService struct {
@@ -47,11 +50,46 @@ func (s *EmailService) send(toEmail, subject, htmlBody string) error {
 	message += "\r\n" + htmlBody
 
 	address := fmt.Sprintf("%s:%s", s.host, s.port)
-	err := smtp.SendMail(address, auth, s.smtpUser, []string{toEmail}, []byte(message))
+
+	conn, err := (&net.Dialer{Timeout: 10 * time.Second}).Dial("tcp", address)
 	if err != nil {
-		return fmt.Errorf("failed to send email via %s:%s: %w", s.host, s.port, err)
+		return fmt.Errorf("failed to connect to SMTP %s: %w", address, err)
 	}
-	return nil
+	defer conn.Close()
+
+	client, err := smtp.NewClient(conn, s.host)
+	if err != nil {
+		return fmt.Errorf("failed to create SMTP client: %w", err)
+	}
+	defer client.Close()
+
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		if err := client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
+			return fmt.Errorf("SMTP STARTTLS failed: %w", err)
+		}
+	}
+
+	if err := client.Auth(auth); err != nil {
+		return fmt.Errorf("SMTP auth failed: %w", err)
+	}
+	if err := client.Mail(s.smtpUser); err != nil {
+		return err
+	}
+	if err := client.Rcpt(toEmail); err != nil {
+		return err
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write([]byte(message)); err != nil {
+		return err
+	}
+	if err := w.Close(); err != nil {
+		return err
+	}
+	return client.Quit()
 }
 
 func (s *EmailService) SendVerificationCode(toEmail, code string) error {

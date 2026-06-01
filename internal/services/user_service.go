@@ -118,7 +118,7 @@ func (s *AuthService) LoginWithGoogle(googleID, email, firstname, lastname, avat
 
 		// 3. If found by Email, link Google ID
 		if err == nil {
-			user.GoogleID = googleID
+			user.GoogleID = models.StringPtr(googleID)
 			if user.AvatarURL == "" {
 				user.AvatarURL = avatarURL
 			}
@@ -127,7 +127,7 @@ func (s *AuthService) LoginWithGoogle(googleID, email, firstname, lastname, avat
 			// 4. If still not found, create new user
 			user = &models.User{
 				Email:      email,
-				GoogleID:   googleID,
+				GoogleID:   models.StringPtr(googleID),
 				Firstname:  firstname,
 				Lastname:   lastname,
 				AvatarURL:  avatarURL,
@@ -160,7 +160,7 @@ func (s *AuthService) LoginWithGithub(githubID, email, firstname, lastname, avat
 
 		// 3. If found by Email, link Github ID
 		if err == nil {
-			user.GithubID = githubID
+			user.GithubID = models.StringPtr(githubID)
 			if user.AvatarURL == "" {
 				user.AvatarURL = avatarURL
 			}
@@ -169,7 +169,7 @@ func (s *AuthService) LoginWithGithub(githubID, email, firstname, lastname, avat
 			// 4. If still not found, create new user
 			user = &models.User{
 				Email:      email,
-				GithubID:   githubID,
+				GithubID:   models.StringPtr(githubID),
 				Firstname:  firstname,
 				Lastname:   lastname,
 				AvatarURL:  avatarURL,
@@ -201,7 +201,7 @@ func (s *AuthService) LoginWithLinkedin(linkedinID, email, firstname, lastname, 
 		}
 
 		if err == nil {
-			user.LinkedinID = linkedinID
+			user.LinkedinID = models.StringPtr(linkedinID)
 			if user.AvatarURL == "" {
 				user.AvatarURL = avatarURL
 			}
@@ -209,7 +209,7 @@ func (s *AuthService) LoginWithLinkedin(linkedinID, email, firstname, lastname, 
 		} else {
 			user = &models.User{
 				Email:      email,
-				LinkedinID: linkedinID,
+				LinkedinID: models.StringPtr(linkedinID),
 				Firstname:  firstname,
 				Lastname:   lastname,
 				AvatarURL:  avatarURL,

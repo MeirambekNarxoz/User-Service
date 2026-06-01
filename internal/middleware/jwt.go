@@ -43,25 +43,22 @@ func GetUserID(c *gin.Context) (uint, bool) {
 	return userID, ok
 }
 
-// AuthMiddleware extracts X-User-Id and X-User-Roles from headers (injected by API Gateway)
+// AuthMiddleware
 func AuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.GetHeader("X-User-Id")
-		
+
 		if userIDStr == "" {
 			log.Printf("DEBUG: X-User-Id header is missing! All headers: %v", c.Request.Header)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "x-user-id header is missing"})
 			return
 		}
-
 		userIDUint, err := strconv.ParseUint(userIDStr, 10, 32)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "x-user-id header is invalid"})
 			return
 		}
-
 		rolesStr := c.GetHeader("X-User-Roles")
-		
 		var role models.Role
 		if strings.Contains(rolesStr, "ROLE_ADMIN") {
 			role = models.RoleAdmin
@@ -70,7 +67,6 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		} else {
 			role = models.RoleUser
 		}
-
 		c.Set("user_id", uint(userIDUint))
 		c.Set("role", role)
 		c.Next()
