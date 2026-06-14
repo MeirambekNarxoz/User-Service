@@ -293,6 +293,9 @@ func (s *AuthService) SearchUsers(query string) ([]models.User, error) {
 
 
 func (s *AuthService) UpdateUserRole(id uint, role models.Role) error {
+	if role != models.RoleUser && role != models.RoleModerator && role != models.RoleAdmin {
+		return errors.New("недопустимая роль пользователя")
+	}
 	return s.userRepo.UpdateUserRole(id, role)
 }
 
